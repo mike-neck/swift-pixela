@@ -1,0 +1,21 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: "mikeneck/swift5"
+    working_directory: /project
+
+    steps:
+      - checkout
+
+      - run:
+          name: checking swift version
+          command: swift --version
+
+      - run:
+          name: run test
+          command: swift test --enable-code-coverage
+
+      # TODO store test results
+      # TODO upload coverage reports

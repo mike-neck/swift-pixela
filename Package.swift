@@ -9,9 +9,10 @@ let package = Package(
         .library(name: "Pixela", targets: ["Pixela"]),
     ],
     dependencies: [
+        .package(url: "https://github.com/google/promises.git", from: "1.2.7"),
     ],
     targets: [
-        .target(name: "Pixela", dependencies: []),
+        .target(name: "Pixela", dependencies: ["Promises"]),
         .testTarget(name: "PixelaTests", dependencies: ["Pixela"]),
     ]
 )

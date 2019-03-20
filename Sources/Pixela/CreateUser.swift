@@ -1,6 +1,6 @@
 import Foundation
 
-struct CreateUserBody: Codable {
+struct CreateUser: Codable {
     let token: String
     let username: String
 

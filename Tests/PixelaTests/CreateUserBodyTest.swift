@@ -2,11 +2,11 @@ import Foundation
 import XCTest
 @testable import Pixela
 
-final class CreateUserBodyTest: XCTestCase {
+final class CreateUserTest: XCTestCase {
 
     func testToJson() {
         let encoder = JSONEncoder()
-        let createUserBody = CreateUserBody(token: "test-token", username: "pixela-user", agreeTermsOfService: .yes, notMinor: .yes)
+        let createUserBody = CreateUser(token: "test-token", username: "pixela-user", agreeTermsOfService: .yes, notMinor: .yes)
         let data: Data = try! encoder.encode(createUserBody)
         let json = String(decoding: data, as: UTF8.self)
         XCTAssertTrue(json.contains("\"username\":\"pixela-user\""), "contains username")

@@ -1,6 +1,6 @@
 import XCTest
 
-import swift_pixelaTests
+import PixelaTests
 
 var tests = [XCTestCaseEntry]()
 tests += PixelaTests.allTests()

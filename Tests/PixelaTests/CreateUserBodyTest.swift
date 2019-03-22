@@ -15,6 +15,12 @@ final class CreateUserTest: XCTestCase {
         XCTAssertTrue(json.contains("\"notMinor\":\"yes\""), "contains notMinor")
     }
 
+    func testDescription() {
+        let createUser = CreateUser(token: "aaa-bbb", username: "test-user", agreeTermsOfService: .yes, notMinor: .no)
+        let string: String = String(describing: createUser)
+        XCTAssertEqual("[token=aaa-bbb,username=test-user,agreeTermsOfService=yes,notMinor=no]", string)
+    }
+
     static var allTests = [
         ("testToJson", testToJson),
     ]

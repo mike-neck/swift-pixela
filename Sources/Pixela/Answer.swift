@@ -1,6 +1,6 @@
 import Foundation
 
-enum Answer {
+public enum Answer {
     case yes
     case no
 

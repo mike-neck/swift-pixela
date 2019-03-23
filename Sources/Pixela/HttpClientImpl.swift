@@ -34,7 +34,7 @@ class HttpClientImpl: HttpClient {
 
             var body: Data?
             do {
-                body = try encoder.encode(object: request.body())
+                body = try self.encoder.encode(object: request.body())
             } catch {
                 reject(PixelaApiError.unexpected(error: error))
                 return

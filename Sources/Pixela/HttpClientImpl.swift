@@ -49,7 +49,7 @@ class HttpClientImpl: HttpClient {
                 req.addValue(PixelaClient.X_USER_TOKEN, forHTTPHeaderField: token)
             }
 
-            var task = self.urlSession.dataTask(with: req, completionHandler: { (data: Data?, resp: URLResponse?, err: Error?) in
+            let task = self.urlSession.dataTask(with: req, completionHandler: { (data: Data?, resp: URLResponse?, err: Error?) in
                 if let error = err {
                     reject(PixelaApiError.unexpected(error: error))
                     return

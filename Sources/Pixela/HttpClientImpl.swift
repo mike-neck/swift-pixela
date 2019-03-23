@@ -34,7 +34,7 @@ class HttpClientImpl: HttpClient {
 
             var body: Data?
             do {
-                body = try self.encode(object: request.body())
+                body = try encoder.encode(object: request.body())
             } catch {
                 reject(PixelaApiError.unexpected(error: error))
                 return
@@ -93,18 +93,4 @@ class HttpClientImpl: HttpClient {
             task.resume()
         }
     }
-
-    private func encode<E>(object: E?) throws -> Data? where E: Encodable {
-        if let object = object {
-            do {
-                return try encoder.encode(object)
-            } catch {
-                throw error
-            }
-        } else {
-            return nil
-        }
-    }
-
-
 }

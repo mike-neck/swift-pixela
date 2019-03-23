@@ -8,9 +8,11 @@ public struct PixelaClient {
     static var X_USER_TOKEN = "X-USER-TOKEN"
 
     private let httpClient: HttpClient
+    private let queue: DispatchQueue
 
-    init(httpClient: HttpClient) {
+    public init(httpClient: HttpClient) {
         self.httpClient = httpClient
+        self.queue = httpClient.queue
     }
 
     public init() {
@@ -42,8 +44,8 @@ public struct PixelaClient {
                 agreeTermsOfService: agreeTermsOfService,
                 notMinor: notMinor)
         return httpClient.sendRequest(createUserRequest)
-                .then { (response: PixelaResponse) in
-                    return Promise { () -> Pixela in
+                .then(on: queue) { (response: PixelaResponse) throws -> Promise<Pixela> in
+                    return Promise(on: self.queue) { () -> Pixela in
                         guard true == response.isSuccess else {
                             throw PixelaApiError.invalidResponse(message: "error - \(response.message)")
                         }
@@ -67,7 +69,7 @@ public enum PixelaApiError: Error {
     case unexpected(error: Error)
 }
 
-public struct Pixela {
+public struct Pixela: CustomStringConvertible {
     let username: String
     let token: String
 
@@ -77,5 +79,9 @@ public struct Pixela {
         self.username = username
         self.token = token
         self.httpClient = httpClient
+    }
+
+    public var description: String {
+        return "pixela[username:\(username),token:\(token)]"
     }
 }

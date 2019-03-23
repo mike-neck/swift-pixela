@@ -27,7 +27,7 @@ struct CreateUserRequest: Request {
     typealias RESPONSE = PixelaResponse
     typealias BODY = CreateUser
 
-    let path: String = "users"
+    let path: String = "/v1/users"
     let httpMethod: HttpMethod = .post
     let userToken: String? = nil
 

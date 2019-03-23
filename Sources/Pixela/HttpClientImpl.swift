@@ -9,22 +9,26 @@ class HttpClientImpl: HttpClient {
 
     let baseUrl: String
     let urlSession: URLSession
+    let queue: DispatchQueue
     let encoder: JSONEncoder = JSONEncoder()
     let decoder: JSONDecoder = JSONDecoder()
 
-    init(using uriSession: URLSession, baseUrl: String = PixelaClient.BASE_URL) {
+    init(using uriSession: URLSession,
+         baseUrl: String = PixelaClient.BASE_URL,
+         queue: DispatchQueue = .global(qos: .default)) {
         self.urlSession = uriSession
         self.baseUrl = baseUrl
+        self.queue = queue
     }
 
     func sendRequest<RES, REQ: Request>(_ request: REQ) -> Promise<RES> where RES == REQ.RESPONSE {
-        return Promise<RES> { success, reject in
+        return Promise<RES>(on: queue) { success, reject in
             if !request.path.starts(with: "/v1") {
                 reject(PixelaApiError.invalidRequest(message: "error - invalid url: \(request.description)"))
                 return
             }
-            guard let url = URL(string: "\(self.baseUrl)/\(request.path)") else {
-                reject(PixelaApiError.invalidRequest(message: "error - invalid url: \(self.baseUrl)/\(request.path)"))
+            guard let url = URL(string: "\(self.baseUrl)\(request.path)") else {
+                reject(PixelaApiError.invalidRequest(message: "error - invalid url: \(self.baseUrl)\(request.path)"))
                 return
             }
 
@@ -45,7 +49,7 @@ class HttpClientImpl: HttpClient {
                 req.addValue(PixelaClient.X_USER_TOKEN, forHTTPHeaderField: token)
             }
 
-            self.urlSession.dataTask(with: req, completionHandler: { (data: Data?, resp: URLResponse?, err: Error?) in
+            var task = self.urlSession.dataTask(with: req, completionHandler: { (data: Data?, resp: URLResponse?, err: Error?) in
                 if let error = err {
                     reject(PixelaApiError.unexpected(error: error))
                     return
@@ -86,6 +90,7 @@ class HttpClientImpl: HttpClient {
                     reject(PixelaApiError.invalidResponse(message: "error - api is success but decoding response failed: \(json)"))
                 }
             })
+            task.resume()
         }
     }
 

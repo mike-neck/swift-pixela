@@ -13,6 +13,6 @@ let package = Package(
     ],
     targets: [
         .target(name: "Pixela", dependencies: ["Promises"]),
-        .testTarget(name: "PixelaTests", dependencies: ["Pixela"]),
+        .testTarget(name: "PixelaTests", dependencies: ["Pixela", "Promises"]),
     ]
 )

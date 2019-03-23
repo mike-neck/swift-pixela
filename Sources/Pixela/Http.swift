@@ -38,6 +38,8 @@ public enum HttpMethod {
 
 public protocol HttpClient {
 
+    var queue: DispatchQueue { get }
+
     func sendRequest<RES, REQ: Request>(_ request: REQ) -> Promise<RES>
             where RES == REQ.RESPONSE
 }

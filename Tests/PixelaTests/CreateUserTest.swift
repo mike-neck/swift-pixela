@@ -25,3 +25,11 @@ final class CreateUserTest: XCTestCase {
         ("testToJson", testToJson),
     ]
 }
+
+final class CreateUserRequestTest: XCTestCase {
+    let request = CreateUserRequest(token: "test-token", username: "test-user", agreeTermsOfService: .yes, notMinor: .no)
+
+    func testPath() {
+        XCTAssertEqual("/v1/users", request.path)
+    }
+}

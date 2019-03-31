@@ -30,4 +30,18 @@ public struct Pixela: CustomStringConvertible {
                     }
                 }
     }
+
+    func deleteUser() -> Promise<Void> {
+        let request = DeleteUserRequest(pixela: self)
+        let queue = httpClient.queue
+        return httpClient.sendRequest(request)
+        .then(on: queue) { (response: PixelaResponse) throws -> Promise<Void> in
+            return Promise(on: queue) { () -> Void in
+                guard true == response.isSuccess else {
+                    throw PixelaApiError.invalidResponse(message: "error - \(response.message)")
+                }
+                return ()
+            }
+        }
+    }
 }

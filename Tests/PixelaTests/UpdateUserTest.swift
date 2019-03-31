@@ -19,8 +19,14 @@ class UpdateUserTest: XCTestCase {
         }
         let pixela = Pixela(username: "test-user", token: "test-token", httpClient: httpClient)
         let promise: Promise<Pixela> = pixela.updateUser(newToken: "new-token")
-        promise.then(on: .main) { (px: Pixela) -> Void in
+        let semaphore = DispatchSemaphore(value: 0)
+        promise.then(on: .global()) { (px: Pixela) -> Void in
             XCTAssertEqual(px.token, "new-token")
-        }
+            semaphore.signal()
+        } .catch(on: .global()) { (err: Error) -> Void in
+                    XCTFail("unexpected error \(err)")
+                    semaphore.signal()
+                }
+        semaphore.wait()
     }
 }

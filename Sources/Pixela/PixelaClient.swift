@@ -68,20 +68,3 @@ public enum PixelaApiError: Error {
     case apiError(response: PixelaResponse)
     case unexpected(error: Error)
 }
-
-public struct Pixela: CustomStringConvertible {
-    let username: String
-    let token: String
-
-    private let httpClient: HttpClient
-
-    init(username: String, token: String, httpClient: HttpClient) {
-        self.username = username
-        self.token = token
-        self.httpClient = httpClient
-    }
-
-    public var description: String {
-        return "pixela[username:\(username),token:\(token)]"
-    }
-}

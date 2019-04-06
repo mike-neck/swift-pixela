@@ -132,3 +132,21 @@ class DataWrapperTest: XCTestCase {
         ("testSomeData", testSomeData),
     ]
 }
+
+class MaybeTest: XCTestCase {
+
+    enum Err: Error {
+        case err
+    }
+
+    func testSome() {
+        let value: String? = "test"
+        let maybe = Maybe(value)
+        let result = maybe.get(or: Err.err)
+        result.doOn(success: { (string: String) -> Void in
+            XCTAssertEqual("test", string)
+        }, failure: { (Error) -> Void in
+            XCTFail()
+        })
+    }
+}

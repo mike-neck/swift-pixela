@@ -82,3 +82,19 @@ struct DataWrapper {
         return .failure(PixelaApiError.invalidResponse(message: "error - response body is not available"))
     }
 }
+
+struct Maybe<T> {
+
+    let raw: T?
+
+    init(_ raw: T?) {
+        self.raw = raw
+    }
+
+    func get(or error: @autoclosure @escaping () -> Error) -> Result<T, Error> {
+        if let v = raw {
+            return .success(v)
+        }
+        return .failure(error())
+    }
+}

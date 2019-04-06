@@ -94,3 +94,87 @@ class HttpClientImpl: HttpClient {
         }
     }
 }
+
+func handleResponseError(_ err: Error?) -> Result<Void, Error> {
+    if let error = err {
+        return .failure(PixelaApiError.unexpected(error: error))
+    }
+    return .success(())
+}
+
+struct HttpStatus {
+    let resp: URLResponse?
+
+    init(of resp: URLResponse?) {
+        self.resp = resp
+    }
+
+    func handle() -> Result<Int, HandlingStatus> {
+        guard let response = resp as? HTTPURLResponse else {
+            let description = String(describing: resp)
+            return .failure(.bodyNotAvailable(PixelaApiError.invalidResponse(message: "error - unknown type response \(description)")))
+        }
+        let statusCode = response.statusCode
+        if 200 <= statusCode && statusCode < 300 {
+            return .success(statusCode)
+        } else {
+            return .failure(.bodyAvailable(statusCode))
+        }
+    }
+}
+
+enum HandlingStatus: Error {
+    case bodyAvailable(_: Int)
+    case bodyNotAvailable(_: Error)
+
+    func handleIfAvailable(data: DataWrapper, using decoder: JSONDecoder) -> Error {
+        switch self {
+        case .bodyNotAvailable(let err): return err
+        case .bodyAvailable(let statusCode):
+            let result = data.unwrap().flatMap { (body: Data) -> Result<Error, Error> in
+                do {
+                    let pixelaResponse = try decoder.decode(PixelaResponse.self, from: body)
+                    return .success(PixelaApiError.apiError(response: pixelaResponse))
+                } catch {
+                    let json = String(data: body, encoding: .utf8) ?? "[decoding error]"
+                    return .success(PixelaApiError.invalidResponse(message: "error - status: \(statusCode) with body: \(json)"))
+                }
+            }.flatMapError { (err: Error) -> Result<Error, Error> in
+                return .success(err)
+            }
+            do {
+                return try result.get()
+            } catch {
+                return error
+            }
+        }
+    }
+}
+
+struct CompletionHandler {
+
+    let decoder: JSONDecoder
+    let data: DataWrapper
+    let status: HttpStatus
+    let err: Error?
+
+    init(decoder: JSONDecoder, data: Data?, resp: URLResponse?, err: Error?) {
+        self.decoder = decoder
+        self.data = DataWrapper(of: data)
+        self.status = HttpStatus(of: resp)
+        self.err = err
+    }
+
+    func handle<Value: Codable>() -> Result<Value, Error> {
+        return handleResponseError(err).flatMap {
+            (Void) -> Result<Int, Error> in
+            status.handle().mapError {
+                $0.handleIfAvailable(data: self.data, using: self.decoder)
+            }
+        }.flatMap { (_: Int) -> Result<Value, Error> in
+            data.unwrap().flatMap { (body: Data) -> Result<Value, Error> in
+                return self.decoder.decode(json: body, as: Value.self)
+            }
+        }
+    }
+}

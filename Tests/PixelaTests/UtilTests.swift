@@ -104,3 +104,31 @@ class JsonEncoderTest: XCTestCase {
         ("testEncodeNone", testEncodeNone)
     ]
 }
+
+class DataWrapperTest: XCTestCase {
+
+    func testNoneData() {
+        let data: Data? = nil
+        let wrapper = DataWrapper(of: data)
+        wrapper.unwrap().doOn(success: { (d: Data) -> Void in
+            XCTFail(String(data: d, encoding: .utf8) ?? "\(d)")
+        }, failure: { (err: Error) -> Void in
+            XCTAssertNotNil(err)
+        })
+    }
+
+    func testSomeData() {
+        let data = Data(repeating: UInt8(0xa), count: 10)
+        let wrapper = DataWrapper(of: data)
+        wrapper.unwrap().doOn(success: { (d: Data) -> Void in
+            XCTAssertEqual(data, d)
+        }, failure: { (Error) -> Void in
+            XCTFail()
+        })
+    }
+
+    static var allTests = [
+        ("testNoneData", testNoneData),
+        ("testSomeData", testSomeData),
+    ]
+}

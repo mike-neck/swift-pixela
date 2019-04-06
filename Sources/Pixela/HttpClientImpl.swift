@@ -103,30 +103,45 @@ func handleResponseError(_ err: Error?) -> Result<Void, Error> {
 }
 
 struct HttpStatusHandler {
-    let resp: URLResponse?
+    let stat: Maybe<HttpStatus>
 
     init(of resp: URLResponse?) {
-        self.resp = resp
+        self.stat = Maybe(resp)
+    }
+
+    init(stat: HttpStatus) {
+        self.stat = Maybe(stat)
+    }
+
+    init() {
+        self.stat = Maybe(nil)
     }
 
     func handle() -> Result<Int, HandlingStatus> {
-        let description = String(describing: resp)
-        return resp.asResult(HandlingStatus.bodyNotAvailable(PixelaApiError.invalidResponse(message: "error - unknown type response \(description)")))
-                .flatMap {
-                    $0.statusCode(onError: HandlingStatus.bodyNotAvailable(PixelaApiError.invalidResponse(message: "error - unknown type response \(description)")))
+        let description = String(describing: stat)
+        return stat
+                .get(or: HandlingStatus.bodyNotAvailable(PixelaApiError.invalidResponse(message: "error - unknown type response \(description)")))
+                .flatMap { (response: HttpStatus) -> Result<Int, Error> in
+                    response.statusCode(onError: HandlingStatus.bodyNotAvailable(PixelaApiError.invalidResponse(message: "error - unknown type response \(description)")))
                 }
                 .flatMap { (statusCode: Int) -> Result<Int, Error> in
-                    if 200 <= statusCode && statusCode < 300 {
-                        return .success(statusCode)
-                    } else {
-                        return .failure(HandlingStatus.bodyAvailable(statusCode))
-                    }
+                    return statusCode.isSuccess(or: HandlingStatus.bodyAvailable(statusCode))
                 }.mapError { (err: Error) -> HandlingStatus in
                     if let error = err as? HandlingStatus {
                         return error
                     }
                     return .bodyNotAvailable(err)
                 }
+    }
+}
+
+fileprivate extension Int {
+    func isSuccess(or error: @autoclosure @escaping () -> Error) -> Result<Int, Error> {
+        if 200 <= self && self < 300 {
+            return .success(self)
+        } else {
+            return .failure(error())
+        }
     }
 }
 

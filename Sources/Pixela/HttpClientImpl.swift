@@ -40,14 +40,7 @@ class HttpClientImpl: HttpClient {
                 return
             }
 
-            var req = URLRequest(url: url)
-            req.httpMethod = request.httpMethod.asString
-            req.httpBody = body
-            req.addValue("User-Agent", forHTTPHeaderField: "swift-pixela-client")
-
-            if let token = request.userToken {
-                req.addValue(PixelaClient.X_USER_TOKEN, forHTTPHeaderField: token)
-            }
+            let req = URLRequest(url: url, body: body, request: request)
 
             let task = self.urlSession.dataTask(with: req, completionHandler: { (data: Data?, resp: URLResponse?, err: Error?) in
                 let completionHandler = CompletionHandler(decoder: self.decoder, data: data, resp: resp, err: err)
@@ -59,6 +52,19 @@ class HttpClientImpl: HttpClient {
                 })
             })
             task.resume()
+        }
+    }
+}
+
+fileprivate extension URLRequest {
+
+    init(url: URL, body: Data?, request: PixelaHttp) {
+        self.init(url: url)
+        self.httpBody = body
+        self.addValue("User-Agent", forHTTPHeaderField: "swift-pixela-client")
+        self.httpMethod = request.httpMethod.asString
+        if let token = request.userToken {
+            self.addValue(PixelaClient.X_USER_TOKEN, forHTTPHeaderField: token)
         }
     }
 }

@@ -1,22 +1,25 @@
 import Foundation
 import Promises
 
-public protocol ApiRequest {
-    associatedtype RESPONSE: Decodable
-    associatedtype BODY: Encodable
+public protocol PixelaHttp {
 
     var path: String { get }
 
     var httpMethod: HttpMethod { get }
 
     var userToken: String? { get }
+}
+
+public protocol ApiRequest {
+    associatedtype RESPONSE: Decodable
+    associatedtype BODY: Encodable
 
     func body() -> BODY?
 
     func responseType() -> RESPONSE.Type
 }
 
-public typealias Request = ApiRequest & CustomStringConvertible
+public typealias Request = PixelaHttp & ApiRequest & CustomStringConvertible
 
 public enum HttpMethod {
     case get

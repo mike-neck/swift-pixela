@@ -75,3 +75,76 @@ class HttpStatusHandlerTest: XCTestCase {
         })
     }
 }
+
+class HandlingStatusTest: XCTestCase {
+
+    enum Err: Error, Equatable {
+        case err
+    }
+
+    let json: String = """
+                       {"isSuccess":false,"message":"test"}
+                       """
+
+    let decoder: JSONDecoder = JSONDecoder()
+
+    private var maybeData: Maybe<Data> {
+        return Maybe(json.data(using: .utf8))
+    }
+
+    func testBodyNotAvailable() {
+        let handlingStatus: HandlingStatus = .bodyNotAvailable(Err.err)
+        let error: Error = handlingStatus.handleIfAvailable(data: self.maybeData, using: decoder)
+        guard let err = error as? Err else {
+            XCTFail()
+            return
+        }
+        XCTAssertEqual(Err.err, err)
+    }
+
+    func testBodyAvailableValidJson() {
+        let handlingStatus: HandlingStatus = .bodyAvailable(400)
+        let error: Error = handlingStatus.handleIfAvailable(data: self.maybeData, using: decoder)
+        guard let err = error as? PixelaApiError else {
+            XCTFail()
+            return
+        }
+        switch err {
+        case .apiError(let response): XCTAssertEqual("test", response.message)
+        default: XCTFail(String(describing: err))
+        }
+    }
+
+    func testBodyAvailableNilJson() {
+        let handlingStatus: HandlingStatus = .bodyAvailable(400)
+        let error: Error = handlingStatus.handleIfAvailable(data: Maybe(nil), using: decoder)
+        guard let err = error as? PixelaApiError else {
+            XCTFail()
+            return
+        }
+        switch err {
+        case .invalidResponse(let message): XCTAssertTrue(message.contains("status: 400 but body not available"), message)
+        default: XCTFail(String(describing: err))
+        }
+    }
+
+    func testBodyAvailableInvalidJson() {
+        let handlingStatus: HandlingStatus = .bodyAvailable(400)
+        let error: Error = handlingStatus.handleIfAvailable(data: Maybe("[isSuccess:true]".data(using: .utf8)), using: decoder)
+        guard let err = error as? PixelaApiError else {
+            XCTFail()
+            return
+        }
+        switch err {
+        case .invalidResponse(let message): XCTAssertTrue(message.contains("error - status: 400 with body: ["), message)
+        default: XCTFail(String(describing: err))
+        }
+    }
+
+    static var allTests = [
+        ("testBodyNotAvailable",testBodyNotAvailable),
+        ("testBodyAvailableValidJson",testBodyAvailableValidJson),
+        ("testBodyAvailableNilJson",testBodyAvailableNilJson),
+        ("testBodyAvailableInvalidJson",testBodyAvailableInvalidJson),
+    ]
+}

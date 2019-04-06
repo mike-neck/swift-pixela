@@ -153,17 +153,19 @@ enum HandlingStatus: Error {
         switch self {
         case .bodyNotAvailable(let err): return err
         case .bodyAvailable(let statusCode):
-            let result = data.get(or: PixelaApiError.invalidResponse(message: "error - response body is not available")).flatMap { (body: Data) -> Result<Error, Error> in
-                do {
-                    let pixelaResponse = try decoder.decode(PixelaResponse.self, from: body)
-                    return .success(PixelaApiError.apiError(response: pixelaResponse))
-                } catch {
-                    let json = String(data: body, encoding: .utf8) ?? "[decoding error]"
-                    return .success(PixelaApiError.invalidResponse(message: "error - status: \(statusCode) with body: \(json)"))
-                }
-            }.flatMapError { (err: Error) -> Result<Error, Error> in
-                return .success(err)
-            }
+            let result = data.get(or: PixelaApiError.invalidResponse(message: "error - status: \(statusCode) but body not available"))
+                    .flatMap { (body: Data) -> Result<Error, Error> in
+                        let result = decoder.decode(json: body, as: PixelaResponse.self)
+                        return result.map {
+                                    PixelaApiError.apiError(response: $0)
+                                }
+                                .flatMapError { _ in
+                                    let json = String(data: body, encoding: .utf8) ?? "[decoding error]"
+                                    return .success(PixelaApiError.invalidResponse(message: "error - status: \(statusCode) with body: \(json)"))
+                                }
+                    }.flatMapError { (err: Error) -> Result<Error, Error> in
+                        return .success(err)
+                    }
             do {
                 return try result.get()
             } catch {

@@ -34,7 +34,7 @@ class OptionalTest: XCTestCase {
     ]
 }
 
-struct CodecTestObj: Decodable, Equatable {
+struct CodecTestObj: Codable, Equatable {
     let value: String
 
     init(value: String) {
@@ -42,7 +42,7 @@ struct CodecTestObj: Decodable, Equatable {
     }
 }
 
-class JsonDecoderTest {
+class JsonDecoderTest: XCTestCase {
 
     let decoder = JSONDecoder()
 
@@ -64,5 +64,43 @@ class JsonDecoderTest {
 
     static var allTests = [
         ("testDecode", testDecode)
+    ]
+}
+
+class JsonEncoderTest: XCTestCase {
+
+    let encoder = JSONEncoder()
+
+    func testEncodeSome() {
+        let object = CodecTestObj(value: "encoding 2 json")
+        let result = encoder.encodeJson(object)
+        result.doOn(success: { (data: Data?) -> Void in
+            XCTAssertNotNil(data)
+            guard let json = data else {
+                XCTFail("not nil")
+                return
+            }
+            let string = String(data: json, encoding: .utf8)
+            XCTAssertEqual("""
+                           {"value":"encoding 2 json"}
+                           """, string)
+        }, failure: { (Error) -> Void in
+            XCTFail()
+        })
+    }
+
+    func testEncodeNone() {
+        let object: CodecTestObj? = nil
+        let result = encoder.encodeJson(object)
+        result.doOn(success: { (data: Data?) -> Void in
+            XCTAssertNil(data)
+        }, failure: { (Error) -> Void in
+            XCTFail()
+        })
+    }
+
+    static var allTests = [
+        ("testEncodeSome", testEncodeSome),
+        ("testEncodeNone", testEncodeNone)
     ]
 }

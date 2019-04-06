@@ -3,15 +3,18 @@ import Foundation
 extension JSONEncoder {
 
     func encode<T>(object value: T?) throws -> Data? where T: Encodable {
-        if let obj = value {
-            do {
-                return try self.encode(obj)
-            } catch {
-                throw error
-            }
-        } else {
-            return nil
+        do {
+            return try encodeJson(value).get()
         }
+    }
+
+    func encodeJson<T: Encodable>(_ value: T?) -> Result<Data?, Error> {
+        guard let object = value else {
+            return .success(nil)
+        }
+        return Result(catching: {
+            return try self.encode(object)
+        })
     }
 }
 

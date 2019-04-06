@@ -68,21 +68,6 @@ extension Result {
     }
 }
 
-struct DataWrapper {
-    let data: Data?
-
-    init(of data: Data?) {
-        self.data = data
-    }
-
-    func unwrap() -> Result<Data, Error> {
-        if let body = data {
-            return .success(body)
-        }
-        return .failure(PixelaApiError.invalidResponse(message: "error - response body is not available"))
-    }
-}
-
 struct Maybe<T> {
 
     let raw: T?

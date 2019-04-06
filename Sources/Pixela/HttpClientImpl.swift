@@ -134,11 +134,11 @@ enum HandlingStatus: Error {
     case bodyAvailable(_: Int)
     case bodyNotAvailable(_: Error)
 
-    func handleIfAvailable(data: DataWrapper, using decoder: JSONDecoder) -> Error {
+    func handleIfAvailable(data: Maybe<Data>, using decoder: JSONDecoder) -> Error {
         switch self {
         case .bodyNotAvailable(let err): return err
         case .bodyAvailable(let statusCode):
-            let result = data.unwrap().flatMap { (body: Data) -> Result<Error, Error> in
+            let result = data.get(or: PixelaApiError.invalidResponse(message: "error - response body is not available")).flatMap { (body: Data) -> Result<Error, Error> in
                 do {
                     let pixelaResponse = try decoder.decode(PixelaResponse.self, from: body)
                     return .success(PixelaApiError.apiError(response: pixelaResponse))
@@ -161,13 +161,13 @@ enum HandlingStatus: Error {
 struct CompletionHandler {
 
     let decoder: JSONDecoder
-    let data: DataWrapper
+    let data: Maybe<Data>
     let status: HttpStatusHandler
     let err: Error?
 
     init(decoder: JSONDecoder, data: Data?, resp: URLResponse?, err: Error?) {
         self.decoder = decoder
-        self.data = DataWrapper(of: data)
+        self.data = Maybe(data)
         self.status = HttpStatusHandler(of: resp)
         self.err = err
     }
@@ -179,9 +179,10 @@ struct CompletionHandler {
                 $0.handleIfAvailable(data: self.data, using: self.decoder)
             }
         }.flatMap { (_: Int) -> Result<Value, Error> in
-            data.unwrap().flatMap { (body: Data) -> Result<Value, Error> in
-                return self.decoder.decode(json: body, as: Value.self)
-            }
+            data.get(or: PixelaApiError.invalidResponse(message: "error - response body is not available"))
+                    .flatMap { (body: Data) -> Result<Value, Error> in
+                        return self.decoder.decode(json: body, as: Value.self)
+                    }
         }
     }
 }

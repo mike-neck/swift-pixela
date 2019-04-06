@@ -32,26 +32,18 @@ class HttpClientImpl: HttpClient {
                 return
             }
 
-            var body: Data?
-            do {
-                body = try self.encoder.encode(object: request.body())
-            } catch {
-                reject(PixelaApiError.unexpected(error: error))
-                return
-            }
-
-            let req = URLRequest(url: url, body: body, request: request)
-
-            let task = self.urlSession.dataTask(with: req, completionHandler: { (data: Data?, resp: URLResponse?, err: Error?) in
-                let completionHandler = CompletionHandler(decoder: self.decoder, data: data, resp: resp, err: err)
-                let result: Result<RES, Error> = completionHandler.handle()
-                result.doOn(success: { (res: RES) -> Void in
-                    success(res)
-                }, failure: { (err: Error) -> Void in
-                    reject(err)
+            self.encoder.encodeJson(request.body()).map { (body: Data?) -> URLRequest in
+                return URLRequest(url: url, body: body, request: request)
+            }.map { (req: URLRequest) -> URLSessionDataTask in
+                return self.urlSession.dataTask(with: req, completionHandler: { (data: Data?, resp: URLResponse?, err: Error?) in
+                    let completionHandler = CompletionHandler(decoder: self.decoder, data: data, resp: resp, err: err)
+                    completionHandler.handle(onSuccess: success, onError: reject)
                 })
+            }.doOn(success: { (task: URLSessionDataTask) -> Void in
+                task.resume()
+            }, failure: { (error: Error) -> Void in
+                reject(PixelaApiError.unexpected(error: error))
             })
-            task.resume()
         }
     }
 }
@@ -174,5 +166,10 @@ struct CompletionHandler {
                         return self.decoder.decode(json: body, as: Value.self)
                     }
         }
+    }
+
+    func handle<Value: Decodable>(onSuccess success: (Value) -> Void, onError reject: (Error) -> Void) {
+        let result: Result<Value, Error> = handle()
+        result.doOn(success: success, failure: reject)
     }
 }

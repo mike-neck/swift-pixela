@@ -66,6 +66,27 @@ extension Result {
         case .failure(let error): failure(error)
         }
     }
+
+    func doNothing() -> () -> Void {
+        return {}
+    }
+
+    func peek(_ action: (Success) -> Void) -> Result<Success, Failure> {
+        switch self {
+        case .success(let value): action(value)
+        case .failure(_):
+            doNothing()()
+        }
+        return self
+    }
+
+    func peekError(_ action: (Failure) -> Void) -> Result<Success, Failure> {
+        switch self {
+        case .failure(let error): action(error)
+        case .success(_): doNothing()()
+        }
+        return self
+    }
 }
 
 struct Maybe<T> {

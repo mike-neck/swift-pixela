@@ -74,6 +74,13 @@ class HttpStatusHandlerTest: XCTestCase {
             }
         })
     }
+
+    static var allTests = [
+        ("testNil",testNil),
+        ("test1xx",test1xx),
+        ("test2xx",test2xx),
+        ("test3xx",test3xx),
+    ]
 }
 
 class HandlingStatusTest: XCTestCase {

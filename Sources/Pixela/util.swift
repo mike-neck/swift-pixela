@@ -2,7 +2,7 @@ import Foundation
 
 extension JSONEncoder {
 
-    func encode<T>(object value: T?) throws -> Data? where T : Encodable {
+    func encode<T>(object value: T?) throws -> Data? where T: Encodable {
         if let obj = value {
             do {
                 return try self.encode(obj)
@@ -24,6 +24,34 @@ extension JSONDecoder {
         } catch {
             return .failure(error)
         }
+    }
+}
+
+extension Optional {
+
+    func asResult(_ error: @autoclosure @escaping () -> Error) -> Result<Wrapped, Error> {
+        switch self {
+        case .none: return .failure(error())
+        case .some(let value): return .success(value)
+        }
+    }
+}
+
+protocol HttpStatus {
+    func statusCode(onError: @autoclosure @escaping () -> Error) -> Result<Int, Error>
+}
+
+extension URLResponse: HttpStatus {
+
+    func asHttpUrlResponse(_ error: @autoclosure @escaping () -> Error) -> Result<HTTPURLResponse, Error> {
+        guard let response = self as? HTTPURLResponse else {
+            return .failure(error())
+        }
+        return .success(response)
+    }
+
+    func statusCode(onError: @autoclosure @escaping () -> Error) -> Result<Int, Error> {
+        return self.asHttpUrlResponse(onError()).map { $0.statusCode }
     }
 }
 

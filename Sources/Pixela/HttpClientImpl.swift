@@ -102,7 +102,7 @@ func handleResponseError(_ err: Error?) -> Result<Void, Error> {
     return .success(())
 }
 
-struct HttpStatus {
+struct HttpStatusHandler {
     let resp: URLResponse?
 
     init(of resp: URLResponse?) {
@@ -110,16 +110,23 @@ struct HttpStatus {
     }
 
     func handle() -> Result<Int, HandlingStatus> {
-        guard let response = resp as? HTTPURLResponse else {
-            let description = String(describing: resp)
-            return .failure(.bodyNotAvailable(PixelaApiError.invalidResponse(message: "error - unknown type response \(description)")))
-        }
-        let statusCode = response.statusCode
-        if 200 <= statusCode && statusCode < 300 {
-            return .success(statusCode)
-        } else {
-            return .failure(.bodyAvailable(statusCode))
-        }
+        let description = String(describing: resp)
+        return resp.asResult(HandlingStatus.bodyNotAvailable(PixelaApiError.invalidResponse(message: "error - unknown type response \(description)")))
+                .flatMap {
+                    $0.statusCode(onError: HandlingStatus.bodyNotAvailable(PixelaApiError.invalidResponse(message: "error - unknown type response \(description)")))
+                }
+                .flatMap { (statusCode: Int) -> Result<Int, Error> in
+                    if 200 <= statusCode && statusCode < 300 {
+                        return .success(statusCode)
+                    } else {
+                        return .failure(HandlingStatus.bodyAvailable(statusCode))
+                    }
+                }.mapError { (err: Error) -> HandlingStatus in
+                    if let error = err as? HandlingStatus {
+                        return error
+                    }
+                    return .bodyNotAvailable(err)
+                }
     }
 }
 
@@ -155,13 +162,13 @@ struct CompletionHandler {
 
     let decoder: JSONDecoder
     let data: DataWrapper
-    let status: HttpStatus
+    let status: HttpStatusHandler
     let err: Error?
 
     init(decoder: JSONDecoder, data: Data?, resp: URLResponse?, err: Error?) {
         self.decoder = decoder
         self.data = DataWrapper(of: data)
-        self.status = HttpStatus(of: resp)
+        self.status = HttpStatusHandler(of: resp)
         self.err = err
     }
 

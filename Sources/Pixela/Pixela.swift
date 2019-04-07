@@ -90,3 +90,103 @@ public struct Graph: CustomStringConvertible {
         return "graph[username:\(pixela.username),graph:\(graphId)]"
     }
 }
+
+public struct RawGraphDefinition: Equatable {
+
+    public let id: String
+    public let name: String
+    public let unit: String
+    public let type: String
+    public let color: String
+    public let timezone: String
+    public let purgeCacheURLs: [String]
+
+    public init(
+            id: String,
+            name: String,
+            unit: String,
+            type: String,
+            color: String,
+            timezone: String,
+            purgeCacheURLs: [String]) {
+        self.id = id
+        self.name = name
+        self.unit = unit
+        self.type = type
+        self.color = color
+        self.timezone = timezone
+        self.purgeCacheURLs = purgeCacheURLs
+    }
+
+    func asGraphDefinition() -> GraphDefinition {
+        return GraphDefinition(raw: self)
+    }
+}
+
+public struct GraphDefinition: CustomStringConvertible {
+
+    private let raw: RawGraphDefinition
+
+    public init(raw: RawGraphDefinition) {
+        self.raw = raw
+    }
+
+    public var id: String {
+        return raw.id
+    }
+
+    public var name: String {
+        return raw.name
+    }
+
+    public var unit: String {
+        return raw.unit
+    }
+
+    public var type: Type {
+        if let t = Type(type: raw.type) {
+            return t
+        }
+        return .unknown(raw.type)
+    }
+
+    public var color: Color {
+        if let color = Color(of: raw.color) {
+            return color
+        }
+        return .unknown(raw.color)
+    }
+
+    public var timezone: String {
+        return raw.timezone
+    }
+
+    public var purgeCacheURLs: [String] {
+        return raw.purgeCacheURLs
+    }
+
+    public var description: String {
+        return "graph-definition[id:\(raw.id),name:\(raw.name),unit:\(raw.unit),type:\(raw.type),color:\(raw.color),timezone:\(raw.timezone),purgeCacheURLs:\(raw.purgeCacheURLs)]"
+    }
+}
+
+public struct RawGraphDefinitions {
+    public let graphs: [RawGraphDefinition]
+
+    public init(graphs: [RawGraphDefinition]) {
+        self.graphs = graphs
+    }
+}
+
+public struct GraphDefinitions {
+    public let graphs: [GraphDefinition]
+
+    init(raw: RawGraphDefinitions) {
+        let graphs = raw.graphs.map { $0.asGraphDefinition() }
+        self.init(graphs: graphs)
+    }
+
+    public init(graphs: [GraphDefinition]) {
+        self.graphs = graphs
+    }
+}

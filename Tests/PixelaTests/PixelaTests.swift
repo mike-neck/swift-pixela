@@ -32,3 +32,32 @@ final class PixelaClientTest: XCTestCase {
 //        ("testPixelaClientCreateUser", ignore_testPixelaClientCreateUser)
     ]
 }
+
+class ColorTest: XCTestCase {
+
+    func testExtensionInitializer() {
+        XCTAssertEqual(Color(of: "shibafu"), .shibafu)
+        XCTAssertEqual(Color(of: "momiji"), .momiji)
+        XCTAssertEqual(Color(of: "sora"), .sora)
+        XCTAssertEqual(Color(of: "ichou"), .ichou)
+        XCTAssertEqual(Color(of: "ajisai"), .ajisai)
+        XCTAssertEqual(Color(of: "kuro"), .kuro)
+        XCTAssertNil(Color(of: "foo"))
+    }
+
+    static var allTests = [
+        ("testExtensionInitializer", testExtensionInitializer),
+    ]
+}
+
+class TypeTest: XCTestCase {
+
+    func testExtensionInitializer() {
+        XCTAssertEqual(Type(type: "int"), .int) 
+        XCTAssertEqual(Type(type: "float"), .float) 
+    }
+
+    static var allTests = [
+        ("testExtensionInitializer", testExtensionInitializer),
+    ]
+}

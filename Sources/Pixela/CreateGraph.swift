@@ -96,25 +96,38 @@ struct CreateGraphRequest: Request {
     }
 }
 
-public enum Type {
+public enum Type: Equatable {
     case int
     case float
+    case unknown(_: String)
 
     var asString: String {
         switch self {
         case .int: return "int"
         case .float: return "float"
+        default: return "unknown"
         }
     }
 }
 
-public enum Color {
+extension Type {
+    init?(type: String) {
+        switch type {
+        case "int": self = .int
+        case "float": self = .float
+        default: return nil
+        }
+    }
+}
+
+public enum Color: Equatable {
     case shibafu
     case momiji
     case sora
     case ichou
     case ajisai
     case kuro
+    case unknown(_: String)
 
     var asString: String {
         switch self {
@@ -124,6 +137,21 @@ public enum Color {
         case .ichou: return "ichou"
         case .ajisai: return "ajisai"
         case .kuro: return "kuro"
+        case .unknown(_): return "unknown"
+        }
+    }
+}
+
+extension Color {
+    init?(of color: String) {
+        switch color {
+        case "shibafu": self = .shibafu
+        case "momiji": self = .momiji
+        case "sora": self = .sora
+        case "ichou": self = .ichou
+        case "ajisai": self = .ajisai
+        case "kuro": self = .kuro
+        default: return nil
         }
     }
 }

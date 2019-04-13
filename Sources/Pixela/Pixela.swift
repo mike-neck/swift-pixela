@@ -74,6 +74,15 @@ public struct Pixela: CustomStringConvertible {
                     }
                 }
     }
+
+    func getGraphDefinitions() -> Promise<GraphDefinitions> {
+        let request = GetGraphDefinitionsRequest(pixela: self)
+        let queue = httpClient.queue
+        return httpClient.sendRequest(request)
+                .then(on: queue) { (response: RawGraphDefinitions) -> GraphDefinitions in
+                    GraphDefinitions(raw: response)
+                }
+    }
 }
 
 public struct Graph: CustomStringConvertible {
@@ -91,7 +100,7 @@ public struct Graph: CustomStringConvertible {
     }
 }
 
-public struct RawGraphDefinition: Equatable {
+public struct RawGraphDefinition: Decodable, Equatable {
 
     public let id: String
     public let name: String
@@ -170,7 +179,7 @@ public struct GraphDefinition: CustomStringConvertible {
     }
 }
 
-public struct RawGraphDefinitions {
+public struct RawGraphDefinitions: Decodable {
     public let graphs: [RawGraphDefinition]
 
     public init(graphs: [RawGraphDefinition]) {
@@ -188,5 +197,9 @@ public struct GraphDefinitions {
 
     public init(graphs: [GraphDefinition]) {
         self.graphs = graphs
+    }
+
+    public var count: Int {
+        return graphs.count
     }
 }
